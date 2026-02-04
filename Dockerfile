@@ -34,13 +34,20 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Create /data directory for Railway volume mount and set permissions
-RUN mkdir -p /data && chown -R node:node /data
+# Create entrypoint script that fixes volume permissions at runtime
+RUN echo '#!/bin/bash\n\
+if [ -d "/data" ]; then\n\
+  chown -R node:node /data 2>/dev/null || true\n\
+fi\n\
+if [ -d "/mnt/data" ]; then\n\
+  chown -R node:node /mnt/data 2>/dev/null || true\n\
+fi\n\
+exec gosu node "$@"' > /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Security hardening: Run as non-root user
-# The node:22-bookworm image includes a 'node' user (uid 1000)
-# This reduces the attack surface by preventing container escape via root privileges
-USER node
+# Install gosu for dropping privileges
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && \
+    rm -rf /var/lib/apt/lists/*
 
 # Start gateway server with default config.
 # Binds to loopback (127.0.0.1) by default for security.
@@ -48,4 +55,5 @@ USER node
 # For container platforms requiring external health checks:
 #   1. Set OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD env var
 #   2. Override CMD: ["node","dist/index.js","gateway","--allow-unconfigured","--bind","lan"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/index.js", "gateway", "--allow-unconfigured"]
