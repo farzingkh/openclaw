@@ -34,24 +34,13 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Copy Railway config for cloud deployments
-COPY railway-config.json /app/railway-config.json
-
-# Create entrypoint script that fixes volume permissions and sets up config
+# Create entrypoint script that fixes volume permissions at runtime
 RUN echo '#!/bin/bash\n\
 if [ -d "/data" ]; then\n\
   chown -R node:node /data 2>/dev/null || true\n\
 fi\n\
 if [ -d "/mnt/data" ]; then\n\
   chown -R node:node /mnt/data 2>/dev/null || true\n\
-fi\n\
-# Set up config directory and copy default config if none exists\n\
-CONFIG_DIR="${OPENCLAW_STATE_DIR:-/home/node/.openclaw}"\n\
-mkdir -p "$CONFIG_DIR"\n\
-chown node:node "$CONFIG_DIR"\n\
-if [ ! -f "$CONFIG_DIR/openclaw.json" ]; then\n\
-  cp /app/railway-config.json "$CONFIG_DIR/openclaw.json"\n\
-  chown node:node "$CONFIG_DIR/openclaw.json"\n\
 fi\n\
 exec gosu node "$@"' > /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
