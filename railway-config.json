@@ -1,0 +1,7 @@
+{
+  "gateway": {
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  }
+}
