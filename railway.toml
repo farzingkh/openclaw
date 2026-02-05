@@ -1,0 +1,25 @@
+# OpenClaw Railway deployment configuration
+# Deploy this repo directly to Railway
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node dist/index.js gateway --allow-unconfigured --port 8080 --bind lan"
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Environment variables (can be overridden in Railway dashboard)
+# Required:
+#   ANTHROPIC_API_KEY - Your Anthropic API key
+#   OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD - For gateway auth
+#
+# Recommended:
+#   OPENCLAW_STATE_DIR=/data
+#   OPENCLAW_WORKSPACE_DIR=/data/workspace
+#
+# Optional:
+#   OPENCLAW_TRUSTED_PROXIES - Override default trusted proxy CIDRs

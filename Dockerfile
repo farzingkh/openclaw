@@ -34,13 +34,19 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Create entrypoint script that fixes volume permissions at runtime
+# Create entrypoint script that fixes volume permissions and configures trustedProxies
 RUN echo '#!/bin/bash\n\
 if [ -d "/data" ]; then\n\
   chown -R node:node /data 2>/dev/null || true\n\
 fi\n\
 if [ -d "/mnt/data" ]; then\n\
   chown -R node:node /mnt/data 2>/dev/null || true\n\
+fi\n\
+# Configure trustedProxies for Railway/cloud proxies (100.64.0.0/10 is CGNAT range used by Railway)\n\
+if [ -n "$OPENCLAW_TRUSTED_PROXIES" ]; then\n\
+  gosu node node /app/dist/index.js config set gateway.trustedProxies "$OPENCLAW_TRUSTED_PROXIES" 2>/dev/null || true\n\
+else\n\
+  gosu node node /app/dist/index.js config set gateway.trustedProxies "[\"100.64.0.0/10\", \"127.0.0.1\"]" 2>/dev/null || true\n\
 fi\n\
 exec gosu node "$@"' > /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
