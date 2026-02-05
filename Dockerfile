@@ -48,6 +48,12 @@ if [ -n "$OPENCLAW_TRUSTED_PROXIES" ]; then\n\
 else\n\
   gosu node node /app/dist/index.js config set gateway.trustedProxies "[\"100.64.0.1\",\"100.64.0.2\",\"100.64.0.3\",\"100.64.0.4\",\"100.64.0.5\",\"100.64.0.6\",\"100.64.0.7\",\"100.64.0.8\",\"100.64.0.9\",\"100.64.0.10\",\"127.0.0.1\"]" 2>/dev/null || true\n\
 fi\n\
+# Set auth mode based on env vars\n\
+if [ -n "$OPENCLAW_GATEWAY_PASSWORD" ]; then\n\
+  gosu node node /app/dist/index.js config set gateway.auth.mode password 2>/dev/null || true\n\
+elif [ -n "$OPENCLAW_GATEWAY_TOKEN" ]; then\n\
+  gosu node node /app/dist/index.js config set gateway.auth.mode token 2>/dev/null || true\n\
+fi\n\
 exec gosu node "$@"' > /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
 
